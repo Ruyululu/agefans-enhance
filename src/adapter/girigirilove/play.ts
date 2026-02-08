@@ -1,9 +1,9 @@
+import { template } from 'lodash-es'
 import { KPlayer } from '../../player'
 import { queryDom } from '../../utils/queryDom'
 import { wait } from '../../utils/wait'
 import { defineIframePlayer } from '../common/defineIframePlayer'
 import T from './subscribe.template.html'
-import mustache from 'mustache'
 
 function getActive() {
   return $<HTMLAnchorElement>('.anthology-list-play li.on > a')
@@ -73,27 +73,10 @@ export const iframePlayer = defineIframePlayer({
     getId: getEpisodeId,
     getAnimeUpdateInfo,
     renderSubscribedAnimes: ($root, sm) => {
-      const grouped = sm.getSubscriptionsSortedByDay()
+      const groups = sm.getSubscriptionsSortedByDay()
 
-      $root.html(T.subList)
+      $root.html(template(T.subList)({ groups }))
       $root.insertBefore('#week-module-box')
-
-      grouped.forEach(({ list }, idx) => {
-        const $list = $(T.subListContent)
-        $list.removeAttr('id')
-        $list.hide()
-        if (list.length) {
-          $list.empty()
-          list.forEach((sub) => {
-            const $item = $(mustache.render(T.subItem, sub))
-            $item.removeAttr('id')
-            $list.append($item)
-          })
-        }
-
-        $list.addClass(`sub-list`)
-        $root.find('#subList > .overflow').append($list)
-      })
 
       const setActive = (idx: number) => {
         $root.attr('data-active-day', idx)

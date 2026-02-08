@@ -1,9 +1,9 @@
+import { template } from 'lodash-es'
 import { closestSameDay } from '../../utils/date'
 import { sleep } from '../../utils/sleep'
 import { local } from '../../utils/storage'
 import { defineIframePlayer } from '../common/defineIframePlayer'
 import T from './subscribe.template.html'
-import mustache from 'mustache'
 
 function calcSortDirection() {
   const $active = getActive()
@@ -197,30 +197,10 @@ export const iframePlayer = defineIframePlayer({
       }
     },
     renderSubscribedAnimes: function ($root, sm) {
-      const grouped = sm.getSubscriptionsSortedByDay()
+      const groups = sm.getSubscriptionsSortedByDay()
 
-      $root.html(T.subList)
+      $root.html(template(T.subList)({ groups }))
       $root.insertBefore('.weekly_list')
-
-      if (!sm.getSubscriptions().length) {
-        const $list = $(mustache.render(T.subListContent, { day: '' }))
-        $root.find('#subList').append($list)
-      }
-
-      grouped.forEach(({ list, day }, idx) => {
-        if (!list.length) return
-
-        const $list = $(mustache.render(T.subListContent, { day }))
-        $list.removeAttr('id')
-        $list.find('.text_list_item').empty()
-        list.forEach((sub) => {
-          const $item = $(mustache.render(T.subItem, sub))
-          $item.removeAttr('id')
-          $list.find('.text_list_item').append($item)
-        })
-
-        $root.find('#subList').append($list)
-      })
 
       $root.find('.force-update').on('click', async () => {
         iframePlayer.subscribe.checkSubscriptionsUpdates(true)

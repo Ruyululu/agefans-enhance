@@ -18,52 +18,66 @@
         <a class="button more force-update">强制更新</a>
       </div>
     </div>
-  </div>
-</div>
 
-<div
-  id="subListContent"
-  class="flex wrap border-box public-r hide-b-2 diy-center1 mask2"
->
-  <div class="cor4 empty-tip">订阅喜欢的番剧，在播放页面标题右侧添加订阅</div>
-</div>
-
-<div id="subItem" class="public-list-box public-pic-b">
-  <div class="public-list-div public-list-bj">
-    <a
-      target="_blank"
-      class="public-list-exp"
-      href="{{current.url}}"
-      title="{{title}}"
-      ><img
-        class="lazy lazy1 gen-movie-img entered loaded"
-        referrerpolicy="no-referrer"
-        src="{{thumbnail}}"
-        alt="{{title}}"
-        data-src="{{thumbnail}}"
-        data-ll-status="loaded"
-      /><span class="public-bg"></span
-      ><span class="public-list-prb hide ft2">{{status}}</span
-      ><span class="public-play"><i class="fa"></i></span></a
+    {{# groups.forEach((group) => { }}
+    <div
+      class="sub-list flex wrap border-box public-r hide-b-2 diy-center1 mask2"
     >
-  </div>
-  <div class="public-list-button">
-    <a
-      target="_blank"
-      class="time-title hide ft4 bold"
-      href="{{current.url}}"
-      title="{{title}}"
-      >{{title}}</a
-    >
-    <div class="public-list-subtitle cor5 hide ft2">
-      <span>观看至</span>
-      <a target="_blank" href="{{current.url}}" title="{{current.title}}"
-        >{{current.title}}</a
-      >
-      <span>/</span>
-      <a target="_blank" href="{{last.url}}" title="{{last.title}}"
-        >{{last.title}}</a
-      >
+      {{# if (group.list.length === 0) { }}
+      <div class="cor4 empty-tip">
+        订阅喜欢的番剧，在播放页面标题右侧添加订阅
+      </div>
+      {{# } }}
+      <!--  -->
+      {{# group.list.forEach((item) => { }}
+      <div class="public-list-box public-pic-b">
+        <div class="public-list-div public-list-bj">
+          <a
+            target="_blank"
+            class="public-list-exp"
+            href="{{item.current.url}}"
+            title="{{item.title}}"
+          >
+            <img
+              class="lazy lazy1 gen-movie-img entered loaded"
+              referrerpolicy="no-referrer"
+              src="{{item.thumbnail}}"
+              alt="{{item.title}}"
+              data-src="{{item.thumbnail}}"
+              data-ll-status="loaded"
+            />
+            <span class="public-bg"></span>
+            <span class="public-list-prb hide ft2">{{item.status}}</span>
+          </a>
+        </div>
+        <div class="public-list-button">
+          <a
+            target="_blank"
+            class="time-title hide ft4 bold"
+            href="{{item.current.url}}"
+            title="{{item.title}}"
+            >{{item.title}}</a
+          >
+          <div class="public-list-subtitle cor5 hide ft2">
+            <span>观看至</span>
+            <a
+              target="_blank"
+              href="{{item.current.url}}"
+              title="{{item.current.title}}"
+              >{{item.current.title}}</a
+            >
+            <span>/</span>
+            <a
+              target="_blank"
+              href="{{item.last.url}}"
+              title="{{item.last.title}}"
+              >{{item.last.title}}</a
+            >
+          </div>
+        </div>
+      </div>
+      {{# }) }}
     </div>
+    {{# }) }}
   </div>
 </div>

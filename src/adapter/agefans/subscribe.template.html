@@ -7,49 +7,65 @@
       订阅列表
     </h6>
   </div>
-</div>
 
-<div id="subListContent" class="text_list_box--bd">
-  <div>{{day}}</div>
-  <div class="text_list_box_wrapper">
-    <ul class="text_list_item">
-      <li>
-        <div class="d-flex position-relative">
-          <div class="flex-grow-1 text-truncate pe-2">
-            订阅喜欢的番剧，在播放页面标题右侧添加订阅
+  {{# if (groups.every(o => o.list.length === 0)) { }}
+  <div class="text_list_box--bd">
+    <div class="text_list_box_wrapper">
+      <ul class="text_list_item">
+        <li>
+          <div class="d-flex position-relative">
+            <div class="flex-grow-1 text-truncate pe-2">
+              订阅列表为空，点击右上角按钮获取订阅信息
+            </div>
           </div>
-        </div>
-      </li>
-    </ul>
+        </li>
+      </ul>
+    </div>
   </div>
+  {{# } }}
+  <!--  -->
+  {{# groups.filter(o => !!o.list.length).forEach(({list, day}) => { }}
+  <div class="text_list_box--bd">
+    <div>{{day}}</div>
+    <div class="text_list_box_wrapper">
+      <ul class="text_list_item">
+        {{# list.forEach(item => { }}
+        <li id="subItem">
+          <div class="d-flex position-relative">
+            <div class="text-truncate pe-2">
+              <a
+                href="{{item.current.url}}"
+                class="text-decoration-none link-light common_alink"
+                >{{item.title}}</a
+              >
+            </div>
+            <div class="flex-grow-1 title_new"></div>
+            <div class="title_sub text-truncate">
+              <a
+                class="text-decoration-none link-light common_alink"
+                href="{{item.current.url}}"
+                >{{item.current.title}}</a
+              >
+              <span>/</span>
+              <a
+                class="text-decoration-none link-light common_alink"
+                href="{{item.last.url}}"
+                >{{item.last.title}}</a
+              >
+            </div>
+
+            <div class="sub-thumbnail-box">
+              <img
+                class="sub-thumbnail"
+                src="{{item.thumbnail}}"
+                alt="{{item.title}}"
+              />
+            </div>
+          </div>
+        </li>
+        {{# }) }}
+      </ul>
+    </div>
+  </div>
+  {{# }) }}
 </div>
-
-<li id="subItem">
-  <div class="d-flex position-relative">
-    <div class="text-truncate pe-2">
-      <a
-        href="{{current.url}}"
-        class="text-decoration-none link-light common_alink"
-        >{{title}}</a
-      >
-    </div>
-    <div class="flex-grow-1 title_new"></div>
-    <div class="title_sub text-truncate">
-      <a
-        class="text-decoration-none link-light common_alink"
-        href="{{current.url}}"
-        >{{current.title}}</a
-      >
-      <span>/</span>
-      <a
-        class="text-decoration-none link-light common_alink"
-        href="{{last.url}}"
-        >{{last.title}}</a
-      >
-    </div>
-
-    <div class="sub-thumbnail-box">
-      <img class="sub-thumbnail" src="{{thumbnail}}" alt="{{title}}" />
-    </div>
-  </div>
-</li>
