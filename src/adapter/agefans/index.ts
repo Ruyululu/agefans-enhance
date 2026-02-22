@@ -1,10 +1,9 @@
 import { runtime } from '../../runtime/index'
 import './index.scss'
-import { mobilePlayModule } from './mobilePlay'
 import { playModule, playModuleInIframe, iframePlayer } from './play'
 
 runtime.register({
-  domains: ['age.tv', 'agemys', 'agefans', 'agedm'],
+  domains: ['age.tv', 'agefans', 'agedm'],
   opts: [
     {
       test: '*',
@@ -15,7 +14,6 @@ runtime.register({
     { test: '/', run: iframePlayer.subscribe.renderSubscribedAnimes },
     { test: '/play', run: playModule },
     { test: '/play', run: playModuleInIframe, runInIframe: true },
-    { test: () => location.hash.includes('/play/'), run: mobilePlayModule },
   ],
   search: {
     name: 'agefans',

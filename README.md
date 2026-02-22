@@ -5,8 +5,7 @@
 ## 网站适配列表
 
 - [agefans](http://www.age.tv)
-- [NT 动漫](https://www.ntdm8.com)
-- [bimiacg](http://www.bimiacg10.net)
+- [bimiacg](http://www.bimiacg14.net)
 - [MuteFun](https://www.mutean.com)
 - [次元城](https://www.ciyuancheng.net)
 - [稀饭动漫](https://dm.xifanacg.com)
