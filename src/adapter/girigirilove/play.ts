@@ -4,6 +4,7 @@ import { queryDom } from '../../utils/queryDom'
 import { wait } from '../../utils/wait'
 import { defineIframePlayer } from '../common/defineIframePlayer'
 import T from './subscribe.template.html'
+import { execInUnsafeWindow } from '../../utils/execInUnsafeWindow'
 
 function getActive() {
   return $<HTMLAnchorElement>('.anthology-list-play li.on > a')
@@ -14,34 +15,6 @@ function switchPart(next: boolean) {
 
 function getEpisodeId() {
   return window.location.pathname.match(/\/playGV(\d+)-/)?.[1] || ''
-}
-
-async function getAnimeUpdateInfo(id: string) {
-  const html = await fetch(`/GV${id}/`).then((res) => res.text())
-  const $doc = $(html)
-
-  const buildLabelSelector = (labels: string[]) =>
-    labels.map((label) => `em.cor4:contains('${label}')`).join(',')
-
-  const getLabelValue = ($context: JQuery, keywords: string[]) =>
-    $context
-      .find(buildLabelSelector(keywords))[0]
-      ?.nextSibling?.textContent?.trim() ?? ''
-
-  const updatedAtText = getLabelValue($doc, ['更新'])
-  const statusText = getLabelValue($doc, ['状态', '狀态', '狀態'])
-
-  const $lists = $doc.find('.anthology-list-play')
-  const longest = $lists.get().reduce((max, el) => {
-    return max.children.length >= el.children.length ? max : el
-  }, $lists[0])
-  const $last = $(longest).find('li a').last()
-
-  return {
-    updatedAt: new Date(updatedAtText).getTime(),
-    status: statusText,
-    last: { title: $last.text(), url: $last.attr('href')! },
-  }
 }
 
 export function runInTop() {
@@ -71,64 +44,82 @@ export const iframePlayer = defineIframePlayer({
   subscribe: {
     storageKey: 'girigirilove_subscriptions',
     getId: getEpisodeId,
-    getAnimeUpdateInfo,
-    renderSubscribedAnimes: ($root, sm) => {
-      const groups = sm.getSubscriptionsSortedByDay()
+    async getAnimeInfo(id, sm) {
+      const res = await fetch(`/GV${id}/`)
+      if (res.status < 200 || res.status >= 300)
+        throw new Error('Failed to fetch anime info')
+      const html = await res.text()
+      const $doc = $(html)
 
-      $root.html(template(T.subList)({ groups }))
+      const buildLabelSelector = (labels: string[]) =>
+        labels.map((label) => `em.cor4:contains('${label}')`).join(',')
+
+      const getLabelValue = ($context: JQuery, keywords: string[]) =>
+        $context
+          .find(buildLabelSelector(keywords))[0]
+          ?.nextSibling?.textContent?.trim() ?? ''
+
+      const updatedAtText = getLabelValue($doc, ['更新'])
+      const statusText = getLabelValue($doc, ['状态', '狀态', '狀態'])
+
+      const $lists = $doc.find('.anthology-list-play')
+      const longest = $lists.get().reduce((max, el) => {
+        return max.children.length >= el.children.length ? max : el
+      }, $lists[0])
+      const $last = $(longest).find('li a').last()
+
+      const updateInfo = {
+        updatedAt: new Date(updatedAtText).getTime(),
+        status: statusText,
+        last: { title: $last.text(), url: $last.attr('href')! },
+      }
+
+      let sub = sm.getSubscription(id)
+
+      if (!sub) {
+        const $current = getActive()
+
+        sub = {
+          id,
+          title: $('.player-title-link').text(),
+          url: $('.player-title-link').attr('href')!,
+          thumbnail: $('.play-details-top .this-pic img').attr('data-src')!,
+          createdAt: Date.now(),
+          checkedAt: Date.now(),
+          current: { title: $current.text(), url: $current.attr('href')! },
+          ...updateInfo,
+        }
+      }
+
+      return { ...sub, ...updateInfo }
+    },
+    renderSubscribedAnimes: (sm) => {
+      const $root = $(T.subListContainer)
       $root.insertBefore('#week-module-box')
 
-      const setActive = (idx: number) => {
-        $root.attr('data-active-day', idx)
-        $('.week-bj').attr('class', 'week-bj b-c')
-        $('.week-bj').addClass(`week-${idx + 1}`)
-        $('.week-select a').removeClass(`tim`)
-        $(`.week-select [class^="week-key${idx + 1}"]`).addClass(`tim`)
-        $('.sub-list').hide()
-        $('.sub-list').eq(idx).show()
-        $('#week-module-box [id^="week-module-"]').hide()
-        $(`#week-module-box [id="week-module-${idx + 1}"]`).show()
-      }
+      sm.onChange(
+        () => {
+          const groups = sm.getSubscriptionsGroupByDay()
+          $root.find('#subList').replaceWith(template(T.subList)({ groups }))
 
-      if ($root.attr('data-active-day')) {
-        setActive(Number($root.attr('data-active-day')))
-      } else {
-        const day = new Date().getDay()
-        setActive(day === 0 ? 6 : day - 1)
-      }
-
-      $('.week-select a').on('click', (e) => {
-        const idx = Number($(e.currentTarget).attr('data-index'))
-        setActive(idx - 1)
-      })
-
-      $root.find('.force-update').on('click', async () => {
-        iframePlayer.subscribe.checkSubscriptionsUpdates(true)
-      })
-    },
-    renderSubscribeBtn: ($btn, sm) => {
-      const id = getEpisodeId()
-      const sub = sm.getSubscription(id)
-      $btn.on('click', async () => {
-        $btn.text('处理中...')
-        if (sub) {
-          sm.deleteSubscription(id)
-        } else {
-          const updateInfo = await getAnimeUpdateInfo(id)
-          const $current = getActive()
-          sm.createSubscription({
-            id,
-            title: $('.player-title-link').text(),
-            url: $('.player-title-link').attr('href')!,
-            thumbnail: $('.play-details-top .this-pic img').attr('data-src')!,
-            createdAt: Date.now(),
-            checkedAt: Date.now(),
-            current: { title: $current.text(), url: $current.attr('href')! },
-            ...updateInfo,
+          execInUnsafeWindow(() => {
+            if (typeof window.Swiper !== 'undefined') {
+              new window.Swiper('.sub-list', {
+                slidesPerView: 'auto',
+                slidesPerGroup: 2,
+                navigation: {
+                  nextEl: '.swiper-button-next',
+                  prevEl: '.swiper-button-prev',
+                },
+              })
+            }
           })
-        }
-      })
-
+        },
+        { immediate: true }
+      )
+      return $root
+    },
+    renderSubscribeBtn($btn) {
       $btn.addClass('cor5 r6')
       $btn.prependTo($('.anthology-header .function'))
     },

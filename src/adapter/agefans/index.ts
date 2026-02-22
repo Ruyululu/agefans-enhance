@@ -12,7 +12,6 @@ runtime.register({
         $('body').addClass('agefans-wrapper')
       },
     },
-    { test: '*', run: iframePlayer.subscribe.checkSubscriptionsUpdates },
     { test: '/', run: iframePlayer.subscribe.renderSubscribedAnimes },
     { test: '/play', run: playModule },
     { test: '/play', run: playModuleInIframe, runInIframe: true },

@@ -58,13 +58,15 @@ export class SubscriptionManager {
     return local.getItem<SubscribedAnime[]>(this.storageKey, [])
   }
 
-  getSubscriptionsSortedByDay() {
+  /** 根据更新顺序做排序，按天成组 */
+  getSubscriptionsGroupByDay() {
     const subscriptions = this.getSubscriptions()
 
     // prettier-ignore
     const daysInChinese = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
     let groups = Array.from({ length: 7 }, (_, idx) => ({
+      dayNum: idx,
       day: daysInChinese[idx],
       list: [] as SubscribedAnime[],
     }))
@@ -76,7 +78,14 @@ export class SubscriptionManager {
       groups[day].list.push(sub)
     })
 
-    groups = groups.slice(1).concat(groups[0])
+    groups.forEach((group) => {
+      group.list.sort((a, b) => a.updatedAt - b.updatedAt)
+    })
+    const day = new Date().getDay()
+    groups = [
+      ...groups.slice(0, day + 1).reverse(),
+      ...groups.slice(day + 1).reverse(),
+    ]
 
     return groups
   }

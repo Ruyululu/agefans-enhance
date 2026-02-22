@@ -6,7 +6,6 @@ runtime.register({
   domains: ['.girigirilove.'],
   opts: [
     { test: '*', run: () => $('body').addClass('girigirilove') },
-    { test: '*', run: iframePlayer.subscribe.checkSubscriptionsUpdates },
     { test: '/', run: iframePlayer.subscribe.renderSubscribedAnimes },
     { test: '/playGV', run: runInTop },
     { test: '/playGV', run: iframePlayer.runInIframe, runInIframe: true },

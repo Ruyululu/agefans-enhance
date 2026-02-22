@@ -155,8 +155,11 @@ export const iframePlayer = defineIframePlayer({
   subscribe: {
     storageKey: 'agefans-subscribe',
     getId: () => window.location.pathname.match(/play\/(\d+)/)![1],
-    async getAnimeUpdateInfo(id, sm) {
-      const html = await fetch(`/detail/${id}/`).then((res) => res.text())
+    async getAnimeInfo(id, sm) {
+      const res = await fetch(`/detail/${id}/`)
+      const html = await res.text()
+      if (res.status < 200 || res.status >= 300)
+        throw new Error('Failed to fetch anime info')
       const $doc = $(html)
 
       const buildLabelSelector = (labels: string[]) =>
@@ -178,63 +181,55 @@ export const iframePlayer = defineIframePlayer({
       }, $lists[0])
       const $last = $(longest).find('li a').last()
 
-      let updatedAt: number
-      const sub = sm.getSubscription(id)
-      if (sub) {
-        if (sub.last.url !== $last.attr('href')!) {
-          updatedAt = closestSameDay(createdAtText).getTime()
-        } else {
-          updatedAt = sub.updatedAt
-        }
-      } else {
-        updatedAt = closestSameDay(createdAtText).getTime()
-      }
+      let sub = sm.getSubscription(id)
 
-      return {
-        updatedAt,
+      const updateInfo = {
+        updatedAt: 0,
         status: statusText,
         last: { title: $last.text(), url: $last.attr('href')! },
       }
-    },
-    renderSubscribedAnimes: function ($root, sm) {
-      const groups = sm.getSubscriptionsSortedByDay()
 
-      $root.html(template(T.subList)({ groups }))
+      if (sub) {
+        if (sub.last.url !== $last.attr('href')!) {
+          updateInfo.updatedAt = closestSameDay(createdAtText).getTime()
+        } else {
+          updateInfo.updatedAt = sub.updatedAt
+        }
+      } else {
+        updateInfo.updatedAt = closestSameDay(createdAtText).getTime()
+
+        const $current = getActive()
+        sub = {
+          id,
+          title: $('.video_detail_wrapper .cata_video_item .card-title').text(),
+          url: $('.player-title-link').attr('href')!,
+          thumbnail: $('.video_thumbs').attr('src')!,
+          createdAt: Date.now(),
+          checkedAt: Date.now(),
+          current: {
+            title: $current.text(),
+            url: $current.find('a').attr('href')!,
+          },
+          ...updateInfo,
+        }
+      }
+
+      return { ...sub, ...updateInfo }
+    },
+    renderSubscribedAnimes: function (sm) {
+      const $root = $(T.subListContainer)
       $root.insertBefore('.weekly_list')
 
-      $root.find('.force-update').on('click', async () => {
-        iframePlayer.subscribe.checkSubscriptionsUpdates(true)
-      })
+      sm.onChange(
+        () => {
+          const groups = sm.getSubscriptionsGroupByDay()
+          $root.find('#subList').replaceWith(template(T.subList)({ groups }))
+        },
+        { immediate: true }
+      )
+      return $root
     },
-    renderSubscribeBtn($btn, sm) {
-      const id = this.getId()
-      const sub = sm.getSubscription(id)
-      $btn.on('click', async () => {
-        $btn.text('处理中...')
-        if (sub) {
-          sm.deleteSubscription(id)
-        } else {
-          const updateInfo = await this.getAnimeUpdateInfo(id, sm)
-          const $current = getActive()
-
-          sm.createSubscription({
-            id,
-            title: $(
-              '.video_detail_wrapper .cata_video_item .card-title'
-            ).text(),
-            url: $('.player-title-link').attr('href')!,
-            thumbnail: $('.video_thumbs').attr('src')!,
-            createdAt: Date.now(),
-            checkedAt: Date.now(),
-            current: {
-              title: $current.text(),
-              url: $current.find('a').attr('href')!,
-            },
-            ...updateInfo,
-          })
-        }
-      })
-
+    renderSubscribeBtn($btn) {
       $btn.addClass('btn video_detail_meta float-end')
       $btn.insertAfter($('.video_detail_meta.feedback-popover.float-end'))
     },

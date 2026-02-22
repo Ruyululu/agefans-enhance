@@ -1,13 +1,16 @@
-<div id="subList" class="text_list_box mb-4">
+<div id="subListContainer" class="text_list_box mb-4">
   <div class="text_list_box--hd">
     <h6 class="title">
-      <a class="float-end">
-        <span class="btn btn-sm btn-outline-light force-update">强制更新</span>
-      </a>
+      <span class="float-end">
+        <span class="update-info" title="点击可强制更新数据"></span>
+      </span>
       订阅列表
     </h6>
   </div>
+  <div id="subList"></div>
+</div>
 
+<div id="subList">
   {{# if (groups.every(o => o.list.length === 0)) { }}
   <div class="text_list_box--bd">
     <div class="text_list_box_wrapper">
@@ -26,7 +29,7 @@
   <!--  -->
   {{# groups.filter(o => !!o.list.length).forEach(({list, day}) => { }}
   <div class="text_list_box--bd">
-    <div>{{day}}</div>
+    <div class="sub-group-day">{{day}}</div>
     <div class="text_list_box_wrapper">
       <ul class="text_list_item">
         {{# list.forEach(item => { }}

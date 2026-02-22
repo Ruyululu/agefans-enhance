@@ -1,3 +1,4 @@
+/** 返回与当前日期最接近的同一周几的日期 */
 export function closestSameDay(value: string | number) {
   if (typeof value === 'string') {
     const ret = value.match(/(\d+).*?(\d\d?).*?(\d\d?)/)
